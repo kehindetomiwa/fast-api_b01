@@ -91,7 +91,7 @@ async def read_book_by_rating(book_rating: int = Query(ge=1, le=5)):
     return book_to_rate
 
 
-@app.post("/create-book", status_code=status.HTTP_200_OK)
+@app.post("/create-book", status_code=status.HTTP_201_CREATED)
 async def create_book(book_request: BookRequest):
     new_book = Book(**book_request.dict())
     BOOKS.append(find_book_id(new_book))
@@ -101,7 +101,7 @@ def find_book_id(book: Book):
     return book
 
 
-@app.put("/books/update_book", status_code=status.HTTP_200_OK)
+@app.put("/books/update_book", status_code=status.HTTP_204_NO_CONTENT)
 async  def update_book(book: BookRequest):
     book_change = False
     for i in range(len(BOOKS)):
@@ -111,7 +111,7 @@ async  def update_book(book: BookRequest):
     if not book_change:
         raise HTTPException(status_code=404, detail=f"Item with id {book.id} not found")
 
-@app.delete("/books/{book_id}", status_code=status.HTTP_200_OK)
+@app.delete("/books/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(book_id: int = Path(gt=0)):
     book_change = False
     for i in range(len(BOOKS)):
