@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime, timezone
 from email.policy import default
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from typing import Annotated
@@ -9,10 +9,12 @@ from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 
-from models import Users
-from database import SessionLocal
+from ..models import Users
+from ..database import SessionLocal
 
 
 
@@ -35,6 +37,7 @@ class CreateUserRequest(BaseModel):
     first_name: str
     last_name: str
     role: str
+    phone_number: str
 
 class Token(BaseModel):
     access_token: str
@@ -86,6 +89,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
+
+template = Jinja2Templates(directory="TodoApp1/templates")
+
+### pages ###
+@router.get('/login-page')
+def render_login_page(request: Request):
+    return template.TemplateResponse('login.html', {'request': request})
+
+@router.get("/register-page")
+def render_register_page(request: Request):
+    return template.TemplateResponse("register.html", {"request": request})
+
+### endpoints ###
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     create_user_model = Users(
@@ -95,7 +111,8 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
         last_name=create_user_request.last_name,
         role=create_user_request.role,
         hashed_password = bcrypt_context.hash(create_user_request.password),
-        is_active = True
+        is_active = True,
+        phone_number = create_user_request.phone_number
     )
 
     db.add(create_user_model)
